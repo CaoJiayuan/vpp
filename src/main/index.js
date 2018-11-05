@@ -3,18 +3,25 @@ const {unzip} = require('zlib')
 const fs = require('fs')
 const request = require('request')
 const progress = require('request-progress')
+const path = require('path')
+
 /**
  * Set `__static` path to static files in production
  * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-static-assets.html
  */
 if (process.env.NODE_ENV !== 'development') {
-  global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
+  global.__static = path.join(__dirname, '/static').replace(/\\/g, '\\\\')
 }
 
 let mainWindow
 const winURL = process.env.NODE_ENV === 'development'
   ? `http://localhost:9080`
   : `file://${__dirname}/index.html`
+const home = process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME']
+
+const workDir = process.env.NODE_ENV === 'development'
+  ? path.resolve( __dirname + '/../../.app')
+  : path.join(home, '.vpp')
 
 function createWindow () {
   /**
@@ -33,7 +40,7 @@ function createWindow () {
   })
   ipcMain.on('download', (e, url) => {
     let name = url.split('/').pop()
-    let path = `${__dirname}/${name}`
+    let path = `${workDir}/${name}`
 
     let file = fs.createWriteStream(path)
     console.log('downloading')
