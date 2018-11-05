@@ -1,5 +1,5 @@
 {
-  "name": "v2ray-app",
+  "name": "vpp",
   "version": "0.0.1",
   "author": "cjy <cjy632258@hotmail.com>",
   "description": "An electron-vue project",
@@ -17,8 +17,8 @@
     "postinstall": ""
   },
   "build": {
-    "productName": "v2ray-app",
-    "appId": "com.v2ray-app.nerio",
+    "productName": "vpp",
+    "appId": "com.vpp.nerio",
     "directories": {
       "output": "build"
     },

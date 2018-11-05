@@ -1,4 +1,4 @@
-# v2ray-app
+# vpp
 
 > An electron-vue project
 
