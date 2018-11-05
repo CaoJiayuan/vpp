@@ -1,5 +1,5 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
-const {unzip} = require('zlib')
+const unzip = require('unzipper')
 const fs = require('fs')
 const request = require('request')
 const progress = require('request-progress')
@@ -23,6 +23,8 @@ const workDir = process.env.NODE_ENV === 'development'
   ? path.resolve( __dirname + '/../../.app')
   : path.join(home, '.vpp')
 
+const coreDir = workDir + '/v2ray'
+
 function createWindow () {
   /**
    * Initial window options
@@ -38,31 +40,7 @@ function createWindow () {
   mainWindow.on('closed', () => {
     mainWindow = null
   })
-  ipcMain.on('download', (e, url) => {
-    let name = url.split('/').pop()
-    let path = `${workDir}/${name}`
-
-    let file = fs.createWriteStream(path)
-    console.log('downloading')
-    progress(request(url, {})).on('progress', state => {
-      console.log(`download [${state.percent * 100}%]`)
-    }).on('error', function (err) {
-      console.log('download error !')
-    }).on('end', function () {
-      console.log('download complete')
-    }).pipe(file)
-    //
-    // http.get(url, {
-    //   onDownloadProgress: function (progressEvent) {
-    //     console.log(`download [${progressEvent.loaded}/${progressEvent.total}]`)
-    //   },
-    //   responseType: 'stream'
-    // }).then(message => {
-    //     message.data.pipe(file)
-    //     console.log('done')
-    //
-    // })
-  })
+  downloadAndUnzip()
 }
 
 app.on('ready', createWindow)
@@ -98,3 +76,46 @@ app.on('ready', () => {
   if (process.env.NODE_ENV === 'production') autoUpdater.checkForUpdates()
 })
  */
+
+function downloadAndUnzip () {
+  ipcMain.on('download', (e, url) => {
+    let name = url.split('/').pop()
+    let zip = `${workDir}/${name}`
+
+    let extract = () => {
+      return fs.createReadStream(zip).pipe(unzip.Extract({
+        path: coreDir
+      }))
+    }
+    if (!fs.existsSync(coreDir)){
+      let file = fs.createWriteStream(zip)
+      console.log('downloading')
+      let stream = progress(request(url, {})).on('progress', state => {
+        console.log(`download [${state.percent * 100}%]`)
+      }).on('error', function (err) {
+        console.log('download error !')
+      }).on('end', function () {
+        console.log('download complete')
+      }).pipe(file)
+      stream.on('finish', () => {
+        extract().on('finish', () => {
+          fs.unlink(zip, err => {
+            console.log(err)
+          })
+        })
+      })
+    }
+
+    //
+    // http.get(url, {
+    //   onDownloadProgress: function (progressEvent) {
+    //     console.log(`download [${progressEvent.loaded}/${progressEvent.total}]`)
+    //   },
+    //   responseType: 'stream'
+    // }).then(message => {
+    //     message.data.pipe(file)
+    //     console.log('done')
+    //
+    // })
+  })
+}
