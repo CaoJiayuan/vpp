@@ -44,7 +44,7 @@ function createWindow () {
       app.dock.hide()
     })
   })
-  createTray(app, mainWindow, v2ray)
+  createTray(v2ray)
   handleStartAndStop()
   handleAddServer()
 }
