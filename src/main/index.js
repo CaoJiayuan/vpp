@@ -1,8 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
-const unzip = require('unzipper')
-const fs = require('fs')
-const request = require('request')
-const progress = require('request-progress')
+import {win, macOS, linux, onWin, onLinux, onMacOS} from './platform'
+import V2Ray from '../app'
+import {createTray} from './tray'
 const path = require('path')
 
 /**
@@ -17,36 +16,43 @@ let mainWindow
 const winURL = process.env.NODE_ENV === 'development'
   ? `http://localhost:9080`
   : `file://${__dirname}/index.html`
-const home = process.env[(process.platform === 'win32') ? 'USERPROFILE' : 'HOME']
+
+const home = process.env[win ? 'USERPROFILE' : 'HOME']
 
 const workDir = process.env.NODE_ENV === 'development'
   ? path.resolve( __dirname + '/../../.app')
   : path.join(home, '.vpp')
 
-const coreDir = workDir + '/v2ray'
+const v2ray = new V2Ray(workDir)
+const serverManager = new V2Ray.ServerManager(v2ray)
 
 function createWindow () {
   /**
    * Initial window options
    */
   mainWindow = new BrowserWindow({
-    height: 563,
+    height: 468,
     useContentSize: true,
-    width: 1000,
+    width: 768,
+    resizable: false,
+    maximizable: false
   })
-
   mainWindow.loadURL(winURL)
-
   mainWindow.on('closed', () => {
     mainWindow = null
+    onMacOS(() => {
+      app.dock.hide()
+    })
   })
-  downloadAndUnzip()
+  createTray(app, mainWindow, v2ray)
+  handleStartAndStop()
+  handleAddServer()
 }
 
 app.on('ready', createWindow)
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+  if (!macOS) {
     app.quit()
   }
 })
@@ -56,6 +62,38 @@ app.on('activate', () => {
     createWindow()
   }
 })
+
+app.on('show', function () {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) {
+      mainWindow.restore()
+    }
+    mainWindow.show()
+  } else {
+    createWindow()
+  }
+  onMacOS(() => {
+    app.dock.show()
+  })
+})
+
+function handleStartAndStop () {
+  ipcMain.on('start', e => {
+    v2ray.start()
+  })
+  ipcMain.on('stop', e => {
+    v2ray.stop()
+  })
+}
+
+function handleAddServer () {
+  ipcMain.on('server.add', (e, data) => {
+
+    serverManager.save(data)
+  })
+}
+
+
 
 /**
  * Auto Updater
@@ -76,46 +114,3 @@ app.on('ready', () => {
   if (process.env.NODE_ENV === 'production') autoUpdater.checkForUpdates()
 })
  */
-
-function downloadAndUnzip () {
-  ipcMain.on('download', (e, url) => {
-    let name = url.split('/').pop()
-    let zip = `${workDir}/${name}`
-
-    let extract = () => {
-      return fs.createReadStream(zip).pipe(unzip.Extract({
-        path: coreDir
-      }))
-    }
-    if (!fs.existsSync(coreDir)){
-      let file = fs.createWriteStream(zip)
-      console.log('downloading')
-      let stream = progress(request(url, {})).on('progress', state => {
-        console.log(`download [${state.percent * 100}%]`)
-      }).on('error', function (err) {
-        console.log('download error !')
-      }).on('end', function () {
-        console.log('download complete')
-      }).pipe(file)
-      stream.on('finish', () => {
-        extract().on('finish', () => {
-          fs.unlink(zip, err => {
-            console.log(err)
-          })
-        })
-      })
-    }
-
-    //
-    // http.get(url, {
-    //   onDownloadProgress: function (progressEvent) {
-    //     console.log(`download [${progressEvent.loaded}/${progressEvent.total}]`)
-    //   },
-    //   responseType: 'stream'
-    // }).then(message => {
-    //     message.data.pipe(file)
-    //     console.log('done')
-    //
-    // })
-  })
-}
