@@ -41,6 +41,14 @@ class V2Ray {
     return `[${time}][${type}] ${line}`
   }
 
+  checkCoreUpdate () {
+    this.version().then(v => {
+      request('https://api.github.com/repos/v2ray/v2ray-core/releases/latest', (err, resp, body) => {
+
+      })
+    })
+  }
+
   init (dbPath) {
     dbPath = dbPath || path.join(this.workDir, 'db.json')
     const adapter = new FileSync(dbPath)

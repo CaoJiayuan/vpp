@@ -11,4 +11,5 @@ export default {
   check_version: '检测Core版本',
   downloading: '下载中...',
   timeout: '超时',
+  dashboard: '仪表盘',
 }

@@ -37,14 +37,17 @@ let buildFromTemplate = function (v2ray, cb) {
       label: lang('test'),
       type: 'normal',
       click: () => v2ray.serverManager.test()
-    }
+    },
   ]
 
+  cb && cb(template)
+  template.push({
+    label: '-',
+    type: 'separator'
+  },)
   template.push({
     label: lang('quit'), type: 'normal', click: () => app.quit()
   })
-
-  cb && cb(template)
   return Menu.buildFromTemplate(template)
 }
 function updateTrayMenu (v2ray, cb) {
