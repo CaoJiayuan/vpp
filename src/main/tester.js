@@ -1,7 +1,7 @@
 const dns = require('dns')
 
-const ping = require('net-ping')
-const session = ping.createSession()
+const np = require('net-ping')
+const session = np.createSession()
 
 export function ping (address) {
   return new Promise((resolve, reject) => {

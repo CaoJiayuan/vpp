@@ -41,7 +41,10 @@
       ]
     },
     "mac": {
-      "icon": "build/icons/icon.icns"
+      "icon": "build/icons/icon.icns",
+      "extendInfo": {
+        "LSUIElement": 1
+      }
     },
     "win": {
       "icon": "build/icons/icon.ico"

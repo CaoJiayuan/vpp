@@ -24,8 +24,7 @@ const workDir = process.env.NODE_ENV === 'development'
   : path.join(home, '.vpp')
 
 const v2ray = new V2Ray(workDir)
-const serverManager = new V2Ray.ServerManager(v2ray)
-
+v2ray.init()
 function createWindow () {
   /**
    * Initial window options
@@ -44,12 +43,17 @@ function createWindow () {
       app.dock.hide()
     })
   })
+}
+
+app.on('ready', () => {
   createTray(v2ray)
   handleStartAndStop()
   handleAddServer()
-}
-
-app.on('ready', createWindow)
+  hide()
+  if (v2ray.setting('autoConnect')) {
+    v2ray.start()
+  }
+})
 
 app.on('window-all-closed', () => {
   if (!macOS) {
@@ -58,9 +62,9 @@ app.on('window-all-closed', () => {
 })
 
 app.on('activate', () => {
-  if (mainWindow === null) {
-    createWindow()
-  }
+  // if (mainWindow === null) {
+  //   createWindow()
+  // }
 })
 
 app.on('show', function () {
@@ -89,12 +93,22 @@ function handleStartAndStop () {
 function handleAddServer () {
   ipcMain.on('server.add', (e, data) => {
 
-    serverManager.save(data)
+     v2ray.serverManager.save(data)
   })
 }
 
+function hide () {
+  if (mainWindow) {
+    mainWindow.hide()
+  }
+  onMacOS(() => {
+    app.dock.hide()
+  })
+}
 
-
+app.on('will-quit', () => {
+  v2ray.stop()
+})
 /**
  * Auto Updater
  *
