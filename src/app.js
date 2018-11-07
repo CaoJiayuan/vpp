@@ -2,6 +2,7 @@
 import {lang} from './lang'
 import {tray} from './main/tray'
 import {ping} from './main/tester'
+import {win} from './main/platform'
 const unzip = require('unzipper')
 const {spawn} = require('child_process')
 const fs = require('fs')
@@ -196,6 +197,11 @@ class V2Ray {
             fs.unlink(zip, err => {
               this.log('unzip error: ${err}', 'system')
             })
+            if (!win) {
+              spawn('chmod', ['+x', 'v2ray'], {
+                cwd: this.coreDir
+              })
+            }
             resolve()
           })
         })
