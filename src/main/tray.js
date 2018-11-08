@@ -15,7 +15,8 @@ let buildFromTemplate = function (v2ray, cb) {
     {
       label: v2ray.started ? lang('close') : lang('open'),
       type: 'normal',
-      click: () => v2ray.started ? v2ray.stop() : v2ray.start()
+      click: () => v2ray.started ? v2ray.stop() : v2ray.start(),
+      enabled: v2ray.installed
     },
     {
       label: '-',

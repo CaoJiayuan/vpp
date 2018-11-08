@@ -1,0 +1,76 @@
+<template>
+  <div class="servers">
+    <div class="columns is-multiline is-mobile">
+      <template v-for="(srv,index) in servers">
+        <div class="column is-one-quarter srv">
+          <div class="card" @click="select(srv)" :class="server.id == srv.id ? 'active' : ''">
+            <div class="srv-content">
+              <h2>{{ srv.remark }} <span class="tag" :class="delayClass(srv)">{{ srv.delay }}ms</span></h2>
+              <small>
+                {{ srv.address }}
+              </small>
+            </div>
+          </div>
+        </div>
+      </template>
+      <div class="column is-one-quarter srv">
+        <div class="card">
+          <div class="srv-content">
+            <h1>+</h1>
+            <br>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  import { delayClass } from '../../utils'
+  import { mapGetters } from 'vuex'
+
+  export default {
+    data () {
+      return {
+        servers: []
+      }
+    },
+    components: {},
+    computed:{
+      ...mapGetters({
+        server: 'currentServer'
+      })
+    },
+    methods: {
+      delayClass (server) {
+        return delayClass(server)
+      },
+      select(srv){
+        this.$ipc.send('v2ray.select', srv)
+      }
+    },
+    mounted () {
+
+    },
+    created () {
+      this.$require('v2ray.servers', srvs => this.servers = srvs)
+
+    },
+
+  }
+</script>
+<style lang="sass">
+  .servers
+    .srv
+      overflow: hidden
+      .active
+        background-color: #62bddf
+    .srv-content
+      padding: 10px 8px
+      h2
+        font-weight: bold
+        font-size: 24px
+        .tag
+          height: 16px
+          padding: 0 3px
+</style>

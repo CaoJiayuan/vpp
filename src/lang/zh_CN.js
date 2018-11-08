@@ -12,4 +12,7 @@ export default {
   downloading: '下载中...',
   timeout: '超时',
   dashboard: '仪表盘',
+  unconnected: '未连接',
+  connected: '已连接',
+  config: '配置',
 }

@@ -1,8 +1,15 @@
 'use strict'
 import {lang} from './lang'
+import {ipcMain} from 'electron'
+
 import {tray} from './main/tray'
+
+import {send} from './main'
+
 import {ping} from './main/tester'
 import {win} from './main/platform'
+import {sendTo} from './utils'
+
 const unzip = require('unzipper')
 const {spawn} = require('child_process')
 const fs = require('fs')
@@ -22,6 +29,7 @@ class V2Ray {
     this.configPath = path.join(this.workDir, 'config.json')
     this.pidFile = path.join(workDir, 'v2ray.pid')
     this.started = fs.existsSync(this.pidFile)
+    this.installed = false
   }
 
   static downloadUrl () {
@@ -98,16 +106,19 @@ class V2Ray {
       this.ps.stdout.on('data', data => {
         if (data.toString().indexOf('started') > -1) {
           this.log(data, 'system')
-          this.started = true
-          tray.emit('should-update')
+          this.onStarted()
           resolve()
           fs.writeFile(this.pidFile, this.ps.pid, err => {})
+        } else if (data.toString().indexOf('fail') > -1) {
+          this.log(data, 'system')
         }
+        send('v2ray.log', data.toString())
+
       })
       this.ps.on('exit', (code, signal) => {
         this.log('V2Ray core stopped\n', 'system')
-        this.started = false
-        tray.emit('should-update')
+        this.stopped()
+        send('v2ray.log', 'V2Ray core stopped')
       })
     })
   }
@@ -132,17 +143,27 @@ class V2Ray {
 
       if (this.ps) {
         this.ps.on('exit', (code, signal) => {
-          this.started = false
-          tray.emit('should-update')
+          this.stopped()
           resolve(code)
         })
         this.ps.kill()
       } else  {
-        this.started = false
-        tray.emit('should-update')
+        this.stopped()
         resolve()
       }
     })
+  }
+
+  onStarted(){
+    this.started = true
+    tray.emit('should-update')
+    send('v2ray.started', true)
+  }
+
+  stopped(){
+    this.started = false
+    tray.emit('should-update')
+    send('v2ray.started', false)
   }
 
   restart(){
@@ -165,10 +186,18 @@ class V2Ray {
           cwd: this.coreDir
         })
         version.stdout.on('data', data => {
-          resolve(data.toString().split('(', 2)[0])
+          let v = data.toString().split('(', 2)[0].trim()
+          this.db.set('version', v).write()
+          this.onInstalled()
+          resolve(v)
         })
       })
     })
+  }
+
+  onInstalled(){
+    this.installed = true
+    tray.emit('should-update')
   }
 
   install (onStart, onProcess) {
@@ -201,6 +230,9 @@ class V2Ray {
               spawn('chmod', ['+x', 'v2ray'], {
                 cwd: this.coreDir
               })
+              spawn('chmod', ['+x', 'v2ctl'], {
+                cwd: this.coreDir
+              })
             }
             resolve()
           })
@@ -210,6 +242,22 @@ class V2Ray {
       }
     })
   }
+
+  handleIpc(){
+    sendTo('v2ray.server', () => {
+      return this.serverManager.current()
+    })
+    sendTo('v2ray.started', () => {
+      return this.started
+    })
+    sendTo('v2ray.servers', () => {
+      return this.serverManager.servers()
+    })
+    ipcMain.on('v2ray.select', (e, data) => {
+      this.serverManager.select(data)
+    })
+  }
+
 }
 
 class ServerManager {
@@ -219,8 +267,13 @@ class ServerManager {
 
   save (server) {
     let servers = this.app.db.get('servers')
-    servers.insert(server).write()
-    return server
+    let srv = servers.insert(server).write()
+
+    if (this.servers().length === 1) {
+      this.select(srv)
+    }
+
+    return srv
   }
 
   remove (id) {
@@ -261,6 +314,7 @@ class ServerManager {
     ]).write()
     this.app.setting('currentServer', srv.id)
     this.app.restart()
+    ServerManager.onServerChanged(srv)
   }
 
   test(){
@@ -270,14 +324,37 @@ class ServerManager {
           delay : ms
         })
         tray.emit('should-update')
+        this.currentId() === srv.id && this.onChangeCurrent()
+        send('v2ray.servers', this.servers())
       }).catch(err => {
         this.update({id: srv.id}, {
           delay : 100000
         })
         tray.emit('should-update')
+        this.currentId() === srv.id && this.onChangeCurrent()
+        send('v2ray.servers', this.servers())
       })
-
     })
+  }
+
+  find(id) {
+    return this.app.db.get('servers').find({id}).value()
+  }
+
+  current(){
+    return this.find(this.app.setting('currentServer'));
+  }
+
+  currentId(){
+    return this.app.setting('currentServer')
+  }
+
+  static onServerChanged(srv){
+    send('v2ray.server', srv)
+  }
+
+  onChangeCurrent(){
+    ServerManager.onServerChanged(this.current())
   }
 }
 

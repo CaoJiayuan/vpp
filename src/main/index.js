@@ -46,10 +46,14 @@ function createWindow () {
 }
 
 app.on('ready', () => {
+  if (!mainWindow) {
+    createWindow()
+  }
   createTray(v2ray)
   handleStartAndStop()
   handleAddServer()
-  hide()
+  //hide()
+  v2ray.handleIpc()
   if (v2ray.setting('autoConnect')) {
     v2ray.start()
   }
@@ -62,9 +66,7 @@ app.on('window-all-closed', () => {
 })
 
 app.on('activate', () => {
-  // if (mainWindow === null) {
-  //   createWindow()
-  // }
+
 })
 
 app.on('show', function () {
@@ -128,3 +130,8 @@ app.on('ready', () => {
   if (process.env.NODE_ENV === 'production') autoUpdater.checkForUpdates()
 })
  */
+export function send(channel, data){
+  if(mainWindow) {
+    mainWindow.webContents.send(channel, data)
+  }
+}
