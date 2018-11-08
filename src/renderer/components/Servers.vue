@@ -3,7 +3,7 @@
     <div class="columns is-multiline is-mobile">
       <template v-for="(srv,index) in servers">
         <div class="column is-one-quarter srv">
-          <div class="card" @click="select(srv)" :class="server.id == srv.id ? 'active' : ''">
+          <div class="card" :class="server.id == srv.id ? 'active' : ''">
             <div class="srv-content">
               <h2>{{ srv.remark }} <span class="tag" :class="delayClass(srv)">{{ srv.delay }}ms</span></h2>
               <small>
