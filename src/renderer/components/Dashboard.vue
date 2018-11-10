@@ -3,7 +3,7 @@
     <div class="columns is-mobile main" style="height: 60vh">
       <div class="column is-4">
       </div>
-      <div class="column is-4 text-center">
+      <div class="column is-4 text-center" v-if="server">
         <p class="title">
           {{ server.remark }}
           <span class="tag"
@@ -15,7 +15,7 @@
           {{ server.address }}
         </p>
       </div>
-      <button @click="started = !started" class="switch-btn button" :class="started ? 'is-danger' : 'is-success'">
+      <button v-if="server" @click="started = !started" class="switch-btn button" :class="started ? 'is-danger' : 'is-success'">
         {{ started ? 'close' : 'open' | lang }}
       </button>
     </div>

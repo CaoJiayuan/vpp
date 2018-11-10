@@ -29,7 +29,11 @@ class V2Ray {
     this.configPath = path.join(this.workDir, 'config.json')
     this.pidFile = path.join(workDir, 'v2ray.pid')
     this.started = fs.existsSync(this.pidFile)
-    this.installed = false
+    //this.installed = false
+  }
+
+  get installed(){
+    return fs.existsSync(this.coreDir)
   }
 
   static downloadUrl () {
@@ -196,7 +200,7 @@ class V2Ray {
   }
 
   onInstalled(){
-    this.installed = true
+    //this.installed = true
     tray.emit('should-update')
   }
 
@@ -218,13 +222,13 @@ class V2Ray {
         let stream = progress(request(url, {})).on('progress', state => {
           onProcess && onProcess(state.percent)
         }).on('error', err => {
-          this.log(`download error: ${err}`, 'system')
+          this.log(`download error: ${err}\n`, 'system')
           reject()
         }).pipe(file)
         stream.on('finish', () => {
           extract().on('finish', () => {
             fs.unlink(zip, err => {
-              this.log('unzip error: ${err}', 'system')
+              this.log(`unzip error: ${err}\n`, 'system')
             })
             if (!win) {
               spawn('chmod', ['+x', 'v2ray'], {

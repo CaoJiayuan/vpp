@@ -54,7 +54,7 @@ app.on('ready', () => {
   handleAddServer()
   //hide()
   v2ray.handleIpc()
-  if (v2ray.setting('autoConnect')) {
+  if (v2ray.setting('autoConnect') && v2ray.installed) {
     v2ray.start()
   }
 })
