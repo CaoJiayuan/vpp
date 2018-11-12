@@ -5,7 +5,7 @@
         <div class="column is-one-quarter srv">
           <div class="card" :class="server.id == srv.id ? 'active' : ''">
             <div class="srv-content">
-              <h2>{{ srv.remark }} <span class="tag" :class="delayClass(srv)">{{ srv.delay }}ms</span></h2>
+              <h2>{{ srv.remark }} <span class="tag" :class="delayClass(srv)">{{ srv.delay === false ? 'timeout' :  srv.delay + 'ms' }}</span></h2>
               <small>
                 {{ srv.address }}
               </small>
@@ -14,10 +14,10 @@
         </div>
       </template>
       <div class="column is-one-quarter srv">
-        <div class="card">
+        <div class="card add-srv">
           <div class="srv-content">
-            <h1>+</h1>
-            <br>
+            <span>+</span>
+            {{ 'add_server' | lang }}
           </div>
         </div>
       </div>
@@ -73,4 +73,9 @@
         .tag
           height: 16px
           padding: 0 3px
+  .add-srv
+    span
+      font-size: 40px
+      line-height: 60px
+      padding: 0 5px 0 20px
 </style>

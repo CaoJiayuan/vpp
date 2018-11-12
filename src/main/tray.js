@@ -91,7 +91,7 @@ function createServersMenu (v2ray) {
       label: g.name,
       submenu: Menu.buildFromTemplate(g.servers.sort((a, b) => a.delay > b.delay).map(srv => {
         let delay = srv.delay + 'ms'
-        if ( srv.delay > 1000 ) {
+        if ( srv.delay === false ) {
           delay = lang('timeout')
         }
         return new MenuItem({

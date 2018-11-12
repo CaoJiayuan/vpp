@@ -15,4 +15,5 @@ export default {
   unconnected: '未连接',
   connected: '已连接',
   config: '配置',
+  error: '错误',
 }

@@ -46,6 +46,10 @@ export function sendTo(channel, data){
 }
 
 export function delayClass (server) {
+  if (server.delay === false) {
+    return 'is-danger'
+  }
+
   if (server.delay < 150) {
     return 'is-success'
   }

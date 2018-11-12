@@ -332,7 +332,7 @@ class ServerManager {
         send('v2ray.servers', this.servers())
       }).catch(err => {
         this.update({id: srv.id}, {
-          delay : 100000
+          delay : false
         })
         tray.emit('should-update')
         this.currentId() === srv.id && this.onChangeCurrent()

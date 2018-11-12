@@ -9,7 +9,7 @@
           <span class="tag"
                 :class="started ? 'is-success' : 'is-danger'">{{ started ? 'connected' : 'unconnected' | lang
             }}</span>
-          <span class="tag" :class="delayClass">{{ server.delay }}ms</span>
+          <span class="tag" :class="delayClass">{{ server.delay === false ? 'timeout' :  server.delay + 'ms' }}</span>
         </p>
         <p class="subtitle">
           {{ server.address }}
