@@ -6,11 +6,13 @@ import router from './router'
 import store from './store'
 import {lang} from '../lang'
 import {ipcRenderer} from 'electron'
+const eva = require('eva-icons');
 
 if (!process.env.IS_WEB) Vue.use(require('vue-electron'))
 Vue.http = Vue.prototype.$http = axios
 Vue.config.productionTip = false
 Vue.prototype.$ipc = ipcRenderer
+Vue.prototype.$eva = eva
 
 Vue.prototype.$require = (channel, on, ...args) => {
     ipcRenderer.on(channel, (e, data) => {

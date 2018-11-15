@@ -2,9 +2,16 @@
   <div id="app">
     <div class="tabs">
       <ul>
-        <router-link to='/' tag='li' :class="$route.path === '/' ? 'is-active' : ''"><a>{{ 'dashboard' | lang }}</a></router-link>
-        <router-link to='/servers' tag='li' :class="$route.path === '/servers' ? 'is-active' : ''"><a>{{ 'servers' | lang }}</a></router-link>
-        <router-link to='/config' tag='li' :class="$route.path === '/config' ? 'is-active' : ''"><a>{{ 'config' | lang }}</a></router-link>
+        <router-link to='/' tag='li' :class="$route.path === '/' ? 'is-active' : ''"><a>
+          <i data-eva="home-outline" data-eva-fill="#8484f5" data-eva-height="16"></i>
+          {{ 'dashboard' | lang }}</a></router-link>
+        <router-link to='/servers' tag='li' :class="$route.path === '/servers' ? 'is-active' : ''">
+        <a>
+        <i data-eva="hard-drive-outline" data-eva-fill="#8484f5" data-eva-height="16"></i>
+          {{ 'servers' | lang }}</a></router-link>
+        <router-link to='/config' tag='li' :class="$route.path === '/config' ? 'is-active' : ''"><a>
+          <i data-eva="options-outline" data-eva-fill="#8484f5" data-eva-height="16"></i>
+          {{ 'config' | lang }}</a></router-link>
       </ul>
     </div>
     <div class="content-wrap">
@@ -26,6 +33,7 @@
       this.$require('v2ray.server', srv => {
         this.setCurrentServer(srv)
       })
+      this.$eva.replace()
     }
   }
 </script>

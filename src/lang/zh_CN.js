@@ -16,4 +16,5 @@ export default {
   connected: '已连接',
   config: '配置',
   error: '错误',
+  add_server: '添加服务器',
 }

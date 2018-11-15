@@ -44,7 +44,7 @@ let buildFromTemplate = function (v2ray, cb) {
   cb && cb(template)
   template.push({
     label: '-',
-    type: 'separator'
+    type: 'separator'·
   },)
   template.push({
     label: lang('quit'), type: 'normal', click: () => app.quit()
