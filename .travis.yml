@@ -32,5 +32,5 @@ install:
 script:
 - yarn run build
 branches:
-  except:
-    - "/^v\\d+\\.\\d+\\.\\d+$/"
+  only:
+    - "/^\\d+\\.\\d+\\.\\d+$/"
