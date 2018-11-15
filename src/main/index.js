@@ -46,13 +46,13 @@ function createWindow () {
 }
 
 app.on('ready', () => {
-  if (!mainWindow) {
-    createWindow()
-  }
+  // if (!mainWindow) {
+  //   createWindow()
+  // }
   createTray(v2ray)
   handleStartAndStop()
   handleAddServer()
-  //hide()
+  hide()
   v2ray.handleIpc()
   if (v2ray.setting('autoConnect') && v2ray.installed) {
     v2ray.start()

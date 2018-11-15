@@ -34,13 +34,13 @@ let buildFromTemplate = function (v2ray, cb) {
       label: lang('groups'),
       submenu: createServersMenu(v2ray)
     },
-    {
-      label: lang('test'),
-      type: 'normal',
-      click: () => v2ray.serverManager.test()
-    },
   ]
 
+  template.push({
+    label: lang('test'),
+    type: 'normal',
+    click: () => v2ray.serverManager.test()
+  })
   cb && cb(template)
   template.push({
     label: '-',
