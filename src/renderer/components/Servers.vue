@@ -79,4 +79,6 @@
       font-size: 40px
       line-height: 60px
       padding: 0 5px 0 20px
+    .srv-content
+      line-height: 12px
 </style>

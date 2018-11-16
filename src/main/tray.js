@@ -1,4 +1,4 @@
-import { app, Menu, Tray, MenuItem } from 'electron'
+import { app, Menu, Tray, MenuItem,NativeImage } from 'electron'
 import { lang } from '../lang'
 
 let tray = null
@@ -31,11 +31,21 @@ let buildFromTemplate = function (v2ray, cb) {
       click: item => v2ray.setting('autoConnect', item.checked) //config.assign({autoConnect: item.checked}).write()
     },
     {
+      label: '-',
+      type: 'separator'
+    },
+    {
       label: lang('groups'),
-      submenu: createServersMenu(v2ray)
+      type: 'normal', enabled: false
     },
   ]
 
+  let groups = createServersMenu(v2ray)
+  template = template.concat(groups)
+  template.push({
+    label: '-',
+    type: 'separator'
+  })
   template.push({
     label: lang('test'),
     type: 'normal',
@@ -44,7 +54,7 @@ let buildFromTemplate = function (v2ray, cb) {
   cb && cb(template)
   template.push({
     label: '-',
-    type: 'separator'·
+    type: 'separator'
   },)
   template.push({
     label: lang('quit'), type: 'normal', click: () => app.quit()
