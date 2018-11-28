@@ -17,4 +17,8 @@ export default {
   config: '配置',
   error: '错误',
   add_server: '添加服务器',
+  cancel: '取消',
+  save: '保存',
+  remark: '备注',
+  delete_server: '删除服务器',
 }

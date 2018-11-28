@@ -40,6 +40,7 @@
 
 <style lang="sass">
   @import "assets/style/app"
+  @import "~@fortawesome/fontawesome-svg-core/styles.css"
   /* CSS */
   #app
     background-color: white

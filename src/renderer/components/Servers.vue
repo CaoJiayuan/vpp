@@ -5,37 +5,42 @@
         <div class="column is-one-quarter srv">
           <div class="card" :class="server.id == srv.id ? 'active' : ''">
             <div class="srv-content">
-              <h2>{{ srv.remark }} <span class="tag" :class="delayClass(srv)">{{ srv.delay === false ? 'timeout' :  srv.delay + 'ms'  | lang}}</span></h2>
+              <h2>{{ srv.remark }} <span class="tag" :class="delayClass(srv)">{{ !srv.delay ? 'timeout' :  srv.delay + 'ms'  | lang}}</span></h2>
               <small>
                 {{ srv.address }}
               </small>
+
+              <font-awesome-icon @click="$refs.add.open(srv)" class="edit" icon="edit" style="color: #8484f5;"></font-awesome-icon>
+              <font-awesome-icon @click="deleteSrv(srv)" class="trash" icon="trash" style="color: #f54f51;"></font-awesome-icon>
             </div>
           </div>
         </div>
       </template>
       <div class="column is-one-quarter srv">
-        <div class="card add-srv">
-          <div class="srv-content">
-            <span><i data-eva="plus-circle-outline" data-eva-fill="#8484f5" data-eva-height="32"></i></span>
-            {{ 'add_server' | lang }}
-          </div>
-        </div>
+        <add-server ref="add" :server="serv"></add-server>
       </div>
     </div>
+
   </div>
 </template>
 
 <script>
   import { delayClass } from '../../utils'
   import { mapGetters } from 'vuex'
+  import { lang } from '../../lang'
+  import AddServer from './AddServer.vue'
+  import {ipcRenderer} from 'electron'
 
   export default {
     data () {
       return {
-        servers: []
+        servers: [],
+        serv: null,
+        model: false,
+        users: []
       }
     },
-    components: {},
+    components: {AddServer},
     computed:{
       ...mapGetters({
         server: 'currentServer'
@@ -47,15 +52,23 @@
       },
       select(srv){
         this.$ipc.send('v2ray.select', srv)
+      },
+      deleteSrv(srv) {
+        if (confirm(lang('delete_server') + '?')) {
+          ipcRenderer.send('v2ray.delete', srv.id)
+        }
       }
     },
     mounted () {
-      this.$eva.replace()
+      this.$nextTick(() => {
+        this.$eva.replace()
 
+      })
     },
     created () {
-      this.$require('v2ray.servers', srvs => this.servers = srvs)
-
+      this.$require('v2ray.servers', srvs => {
+        this.servers = srvs
+      })
     },
 
   }
@@ -68,6 +81,17 @@
         background-color: #62bddf
     .srv-content
       padding: 10px 8px
+      position: relative
+      .edit
+        position: absolute
+        right: 26px
+        top: 6px
+        cursor: pointer
+      .trash
+        position: absolute
+        right: 6px
+        top: 6px
+        cursor: pointer
       h2
         font-weight: bold
         font-size: 24px
@@ -75,10 +99,12 @@
           height: 16px
           padding: 0 3px
   .add-srv
+    cursor: pointer
     span
-      font-size: 40px
       line-height: 60px
-      padding: 0 5px 0 20px
-    .srv-content
-      line-height: 12px
+      padding-left: 40px
+    .add-icon
+      position: absolute
+      left: 20px
+      top: 24px
 </style>

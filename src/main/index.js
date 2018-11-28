@@ -11,6 +11,7 @@ const path = require('path')
 if (process.env.NODE_ENV !== 'development') {
   global.__static = path.join(__dirname, '/static').replace(/\\/g, '\\\\')
 }
+const hideAtStart = false
 
 let mainWindow
 const winURL = process.env.NODE_ENV === 'development'
@@ -30,9 +31,9 @@ function createWindow () {
    * Initial window options
    */
   mainWindow = new BrowserWindow({
-    height: 468,
+    height: 680,
     useContentSize: true,
-    width: 768,
+    width: 986,
     resizable: false,
     maximizable: false
   })
@@ -46,13 +47,13 @@ function createWindow () {
 }
 
 app.on('ready', () => {
-  // if (!mainWindow) {
-  //   createWindow()
-  // }
+  if (!mainWindow && !hideAtStart) {
+    createWindow()
+  }
   createTray(v2ray)
   handleStartAndStop()
   handleAddServer()
-  hide()
+  hideAtStart && hide()
   v2ray.handleIpc()
   if (v2ray.setting('autoConnect') && v2ray.installed) {
     v2ray.start()

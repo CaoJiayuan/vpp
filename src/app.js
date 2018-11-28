@@ -207,6 +207,9 @@ class V2Ray {
   install (onStart, onProcess) {
     return new Promise((resolve, reject) => {
       if (!fs.existsSync(this.coreDir)) {
+        if (!fs.existsSync(this.workDir)) {
+          fs.mkdirSync(this.workDir, 775)
+        }
         let url = V2Ray.downloadUrl()
         let name = url.split('/').pop()
         let zip = `${this.workDir}/${name}`
@@ -260,6 +263,15 @@ class V2Ray {
     ipcMain.on('v2ray.select', (e, data) => {
       this.serverManager.select(data)
     })
+    ipcMain.on('v2ray.add', (e, data) => {
+      this.serverManager.save(data)
+    })
+    ipcMain.on('v2ray.delete', (e, data) => {
+      this.serverManager.remove(data)
+    })
+    sendTo('v2ray.users', () => {
+      return this.serverManager.users()
+    })
   }
 
 }
@@ -271,17 +283,24 @@ class ServerManager {
 
   save (server) {
     let servers = this.app.db.get('servers')
+
     let srv = servers.insert(server).write()
 
     if (this.servers().length === 1) {
       this.select(srv)
     }
+    this.serversChange()
 
     return srv
   }
 
   remove (id) {
     this.app.db.get('servers').remove({id}).write()
+    this.serversChange()
+  }
+
+  serversChange(){
+    send('v2ray.servers', this.servers())
   }
 
   update(where, data){
@@ -293,6 +312,10 @@ class ServerManager {
 
   servers () {
     return this.app.db.get('servers').value()
+  }
+
+  users(){
+    return this.app.db.get('users').value()
   }
 
   groups(){
