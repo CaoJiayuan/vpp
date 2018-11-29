@@ -1,6 +1,6 @@
 #vpp
 
-[![Build Status](https://travis-ci.org/CaoJiayuan/vpp.svg?branch=master)](https://travis-ci.org/CaoJiayuan/vpp)
+[![Build Status](https://travis-ci.org/CaoJiayuan/vpp.svg)](https://travis-ci.org/CaoJiayuan/vpp)
 [![Build status](https://ci.appveyor.com/api/projects/status/ex47k4rouv3oflug?svg=true)](https://ci.appveyor.com/project/CaoJiayuan/vpp)
 > An electron-vue project
 
