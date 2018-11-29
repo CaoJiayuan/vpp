@@ -14,6 +14,14 @@ export default new Router({
       component: require('@/components/Servers').default
     },
     {
+      path: '/users',
+      component: require('@/components/Users').default
+    },
+    {
+      path: '/config',
+      component: require('@/components/Config').default
+    },
+    {
       path: '*',
       redirect: '/'
     }

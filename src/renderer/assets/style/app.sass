@@ -1,15 +1,23 @@
 @import "var"
 
-$tabs-border-bottom-width: 2px
-$modal-background-background-color: rgba(0, 0, 0, .6)
+$tabs-border-bottom-style: none
+$modal-background-background-color: rgba(0, 0, 0, 0.3)
 $modal-content-spacing-mobile: 10px
 body
   background-color: #edf1f3
-
+.pull-right
+  float: right
 *::-webkit-scrollbar
   display: none
-
+.wrapper
+  width: 100%
+  height: auto
 .content-wrap
   margin: 0 10px
+
+.card-footer
+  .is-disabled
+    color: #a3a3a3
 @import "~bulma"
 @import "card"
+@import "transition"

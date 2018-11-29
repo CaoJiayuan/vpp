@@ -49,7 +49,6 @@ export function delayClass (server) {
   if (server.delay === false) {
     return 'is-danger'
   }
-
   if (server.delay < 150) {
     return 'is-success'
   }
@@ -59,7 +58,6 @@ export function delayClass (server) {
   if (server.delay >= 300 && server.delay < 500) {
     return 'is-info'
   }
-
   if (server.delay >= 500) {
     return 'is-danger'
   }

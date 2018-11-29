@@ -4,16 +4,32 @@
       <div class="column is-4">
       </div>
       <div class="column is-4 text-center" v-if="server">
-        <p class="title">
-          {{ server.remark }}
-          <span class="tag"
-                :class="started ? 'is-success' : 'is-danger'">{{ started ? 'connected' : 'unconnected' | lang
-            }}</span>
-          <span class="tag" :class="delayClass">{{ server.delay === false ? 'timeout' :  server.delay + 'ms' | lang }}</span>
-        </p>
-        <p class="subtitle">
-          {{ server.address }}
-        </p>
+        <div class="card">
+          <div class="card-content">
+            <p class="title">
+              {{ server.remark }}
+              <span class="tag"
+                    :class="started ? 'is-success' : 'is-danger'">{{ started ? 'connected' : 'unconnected' | lang
+                }}</span>
+              <span class="tag" :class="delayClass">{{ server.delay === false ? 'timeout' :  server.delay + 'ms' | lang }}</span>
+            </p>
+            <p class="subtitle">
+              {{ server.address }}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="column is-4 text-center" v-if="!server">
+        <div class="card">
+          <div class="card-content">
+            <p class="title">
+              {{ 'unselect_server' | lang }}
+            </p>
+            <p class="subtitle" style="color: grey">
+              {{ 'select_server_from_tray' | lang }}
+            </p>
+          </div>
+        </div>
       </div>
       <button v-if="server" @click="started = !started" class="switch-btn button" :class="started ? 'is-danger' : 'is-success'">
         {{ started ? 'close' : 'open' | lang }}

@@ -100,12 +100,15 @@ function createServersMenu (v2ray) {
     return {
       label: g.name,
       submenu: Menu.buildFromTemplate(g.servers.sort((a, b) => a.delay > b.delay).map(srv => {
-        let delay = srv.delay + 'ms'
+        let delay = srv.delay + ' ms'
         if ( srv.delay === false ) {
           delay = lang('timeout')
         }
+        if (srv.delay === undefined) {
+          delay = '';
+        }
         return new MenuItem({
-          label: (srv.remark || srv.address) + '\t' + delay,
+          label: (srv.remark || srv.address) + '\t\t' + delay,
           type: 'radio',
           checked: v2ray.setting('currentServer') === srv.id,
           click: () => manager.select(srv)

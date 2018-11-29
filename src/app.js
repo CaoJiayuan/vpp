@@ -9,6 +9,7 @@ import {send} from './main'
 import {ping} from './main/tester'
 import {win} from './main/platform'
 import {sendTo} from './utils'
+import DB from './db'
 
 const unzip = require('unzipper')
 const {spawn} = require('child_process')
@@ -64,10 +65,7 @@ class V2Ray {
 
   init (dbPath) {
     dbPath = dbPath || path.join(this.workDir, 'db.json')
-    const adapter = new FileSync(dbPath)
-    this.db = low(adapter)
-    this.db._.mixin(lodashId)
-    this.db.defaults({
+    this.db = new DB(dbPath, {
       servers: [],
       users: [],
       groups: [],
@@ -76,11 +74,11 @@ class V2Ray {
         currentServer: null,
         locale: 'zh_CN'
       }
-    }).write()
+    })
+
     this.serverManager = new ServerManager(this)
     const configDBAdapter = new FileSync(this.configPath)
-    this.configDB = low(configDBAdapter)
-    this.configDB.defaults({
+    this.configDB = new DB(this.configPath, {
       "log": {
         "loglevel": "warning"
       },
@@ -99,7 +97,7 @@ class V2Ray {
         "settings": {},
         "tag": "direct"
       }
-    }).write()
+    })
   }
 
   start () {
@@ -191,15 +189,15 @@ class V2Ray {
         })
         version.stdout.on('data', data => {
           let v = data.toString().split('(', 2)[0].trim()
-          this.db.set('version', v).write()
-          this.onInstalled()
+          this.db.set('version', v)
+          V2Ray.onInstalled()
           resolve(v)
         })
       })
     })
   }
 
-  onInstalled(){
+  static onInstalled(){
     //this.installed = true
     tray.emit('should-update')
   }
@@ -260,6 +258,12 @@ class V2Ray {
     sendTo('v2ray.servers', () => {
       return this.serverManager.servers()
     })
+    sendTo('v2ray.users', () => {
+      return this.serverManager.users()
+    })
+    sendTo('v2ray.config', () => {
+      return this.configDB.get('inbound').value()
+    })
     ipcMain.on('v2ray.select', (e, data) => {
       this.serverManager.select(data)
     })
@@ -268,6 +272,9 @@ class V2Ray {
     })
     ipcMain.on('v2ray.delete', (e, data) => {
       this.serverManager.remove(data)
+    })
+    ipcMain.on('users.add', (e, data) => {
+      this.serverManager.saveUser(data)
     })
     sendTo('v2ray.users', () => {
       return this.serverManager.users()
@@ -282,9 +289,13 @@ class ServerManager {
   }
 
   save (server) {
-    let servers = this.app.db.get('servers')
-
-    let srv = servers.insert(server).write()
+    let servers = this.app.db.model('servers')
+    let srv
+    if (server.id) {
+       srv = servers.where({id: server.id}).update(server)
+    } else  {
+      srv = servers.create(server)
+    }
 
     if (this.servers().length === 1) {
       this.select(srv)
@@ -294,6 +305,19 @@ class ServerManager {
     return srv
   }
 
+  saveUser (user) {
+    let users = this.app.db.model('users')
+    let u
+    if (user.id) {
+       u = users.where({id: user.id}).update(user)
+    } else  {
+      u = users.create(user)
+    }
+
+    this.usersChange()
+    return u
+  }
+
   remove (id) {
     this.app.db.get('servers').remove({id}).write()
     this.serversChange()
@@ -301,6 +325,10 @@ class ServerManager {
 
   serversChange(){
     send('v2ray.servers', this.servers())
+    tray.emit('should-update')
+  }
+  usersChange(){
+    send('v2ray.users', this.users())
   }
 
   update(where, data){
@@ -311,15 +339,15 @@ class ServerManager {
   }
 
   servers () {
-    return this.app.db.get('servers').value()
+    return this.app.db.model('servers').get()
   }
 
   users(){
-    return this.app.db.get('users').value()
+    return this.app.db.model('users').get()
   }
 
   groups(){
-    let gs = this.app.db.get('groups').value().map(g => {
+    let gs = this.app.db.model('groups').get().map(g => {
       g.servers = this.app.db.get('servers').filter(s => s.group_id === g.id).value()
       return g
     })
@@ -336,11 +364,28 @@ class ServerManager {
   select(srv){
     let outbound = this.app.configDB.get('outbound')
 
+    srv.users = srv.users.map(u => {
+      if (typeof u === 'string') {
+        let filter = this.users().filter(user => user.id === u)
+
+        if (filter.length < 1) {
+          return u;
+        }
+
+        return filter[0]
+      }
+      return u;
+    })
+
     outbound.set('settings.vnext', [
       srv
     ]).write()
+
+    outbound.set('streamSettings', srv.options).write()
     this.app.setting('currentServer', srv.id)
-    this.app.restart()
+    if (this.app.setting('autoConnect') || this.app.started) {
+      this.app.restart()
+    }
     ServerManager.onServerChanged(srv)
   }
 
@@ -365,7 +410,7 @@ class ServerManager {
   }
 
   find(id) {
-    return this.app.db.get('servers').find({id}).value()
+    return this.app.db.model('servers').find(id)
   }
 
   current(){
@@ -378,6 +423,7 @@ class ServerManager {
 
   static onServerChanged(srv){
     send('v2ray.server', srv)
+    tray.emit('should-update')
   }
 
   onChangeCurrent(){

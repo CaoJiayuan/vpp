@@ -1,7 +1,8 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu } from 'electron'
 import {win, macOS, linux, onWin, onLinux, onMacOS} from './platform'
 import V2Ray from '../app'
 import {createTray} from './tray'
+import { lang } from '../lang/index'
 const path = require('path')
 
 /**
@@ -44,6 +45,35 @@ function createWindow () {
       app.dock.hide()
     })
   })
+
+  let template = [
+    {
+      label: 'Vpp',
+      submenu: [
+        { label: 'Vpp', enabled: false },
+        { label: lang("Preferences"), accelerator: "CmdOrCtrl+,", selector: "undo:", click: () => {
+          app.emit('show')
+          send('navigate', '/config')
+        }},
+        { type: "separator" },
+        { label: lang("Quit"), accelerator: macOS ? "Cmd+Q" : "Ctrl+F4", role: "quit" },
+      ]
+    },
+    {
+      label: lang("Edit"),
+      submenu: [
+        { label: lang("Undo"), accelerator: "CmdOrCtrl+Z", selector: "undo:" },
+        { label: lang("Redo"), accelerator: "Shift+CmdOrCtrl+Z", selector: "redo:" },
+        { type: "separator" },
+        { label: lang("Cut"), accelerator: "CmdOrCtrl+X", selector: "cut:" },
+        { label: lang("Copy"), accelerator: "CmdOrCtrl+C", selector: "copy:" },
+        { label: lang("Paste"), accelerator: "CmdOrCtrl+V", selector: "paste:" },
+        { label: lang("Select All"), accelerator: "CmdOrCtrl+A", selector: "selectAll:" }
+      ]
+    }
+  ];
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
 app.on('ready', () => {

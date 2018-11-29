@@ -16,6 +16,14 @@ class DB {
     return new Model(collection, this.low)
   }
 
+  get(collection) {
+    return this.low.get(collection);
+  }
+
+  set(key, value){
+    return this.low.get(key, value).write();
+  }
+
   static open(dbPath, $defaults = {}) {
     return new DB(dbPath, $defaults)
   }
@@ -47,13 +55,25 @@ class Model{
   create(data){
     let db = this.open()
 
+    delete data['id']
     return db.insert(data).write()
   }
 
-  updateOrCreate(where, data = {}){
-    if (this.where(where).first()) {
+  update(data){
+    let db = this.open()
 
+    delete data['id']
+    return db.find(this.wheres).assign(data).write()
+  }
+
+  updateOrCreate(where, data = {}){
+    let exists = this.where(where).first()
+
+    if (exists) {
+      return new Model(this.collection, this._).where(where)
+        .update(data)
     }
+    return this.create(Object.assign({}, where, data))
   }
 
   all(){
@@ -63,19 +83,24 @@ class Model{
       return db.value()
     }
 
-    return db.find(this.wheres).value()
+    return db.filter(this.wheres).value()
   }
 
   get(){
     return this.all()
   }
 
+  value(){
+    return this.all()
+  }
+
   first(){
-
     let all = this.all()
+    if (all && all.length > 0) {
+      return all[0]
+    }
 
-
-    return all[0]
+    return undefined
   }
 
   open(){
