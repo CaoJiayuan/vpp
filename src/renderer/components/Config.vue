@@ -9,11 +9,17 @@
   <div class="field">
     <label class="label is-normal">{{ 'socks5_port' | lang }}*</label>
     <div class="control">
-      <input required class="input" v-model="config.port" type="number" :placeholder="'socks5_port' | lang ">
+      <input required class="input" v-model="config.socks5_port" type="number" :placeholder="'socks5_port' | lang ">
     </div>
   </div>
   <div class="field">
-    <button class="button is-info" :disabled="!canSave">{{ 'save' | lang }}</button>
+    <label class="label is-normal">{{ 'http_port' | lang }}</label>
+    <div class="control">
+      <input required class="input" v-model="config.http_port" type="number" :placeholder="'http_port' | lang ">
+    </div>
+  </div>
+  <div class="field">
+    <button class="button is-info" :disabled="!canSave" @click="save">{{ 'save' | lang }}</button>
   </div>
 </div>
 </template>
@@ -24,24 +30,30 @@
       return {
         config: {
           listen: '127.0.0.1',
-          port: 3080
+          socks5_port: 3080,
+          http_port: 3087
         }
       }
     },
     computed:{
       canSave(){
-        return this.config.listen && this.config.port
+        return this.config.listen && this.config.socks5_port
       }
     },
     components: {},
-    methods: {},
+    methods: {
+      save(){
+        this.config.socks5_port = parseInt(this.config.socks5_port)
+        this.config.http_port = parseInt(this.config.http_port)
+        this.$ipc.send('config.save', this.config)
+      }
+    },
     mounted () {
 
     },
     created () {
       this.$require('v2ray.config', c => this.config = c)
     },
-
   }
 </script>
 

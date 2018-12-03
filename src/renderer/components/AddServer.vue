@@ -38,7 +38,7 @@
                 <div class="control">
                   <div class="select is-multiple">
                     <select v-model="serv.users" multiple size="5" v-if="users.length > 0">
-                      <option :value="u.id" v-for="u in users">{{ u.remark ? u.remark : u.id }}</option>
+                      <option :value="u.id" v-for="u in users">{{ u.remark ? u.remark : u.uuid }}</option>
                     </select>
                   </div>
                   <i data-eva="plus-circle-outline" data-eva-fill="#8484f5" data-eva-height="32"></i>

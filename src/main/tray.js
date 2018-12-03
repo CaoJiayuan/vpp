@@ -108,7 +108,7 @@ function createServersMenu (v2ray) {
           delay = '';
         }
         return new MenuItem({
-          label: (srv.remark || srv.address) + '\t\t' + delay,
+          label: (srv.remark || srv.address) + '    ' + delay,
           type: 'radio',
           checked: v2ray.setting('currentServer') === srv.id,
           click: () => manager.select(srv)

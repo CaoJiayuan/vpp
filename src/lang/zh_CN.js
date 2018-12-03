@@ -35,6 +35,7 @@ export default {
   delete: '删除',
   listen_address: '监听地址',
   socks5_port: 'Socks5端口',
+  http_port: 'Http端口',
   Undo: '撤销',
   Redo: '重做',
   Cut: '剪切',
@@ -43,4 +44,7 @@ export default {
   'Select All': '全选',
   Quit: '退出',
   Preferences: '偏好设置',
+  installing_core: '下载V2Ray Core',
+  downloading_core: '下载中...',
+  delete_user: '删除用户',
 }

@@ -1,14 +1,14 @@
 'use strict'
-import {lang} from './lang'
-import {ipcMain} from 'electron'
+import { lang } from './lang'
+import { ipcMain } from 'electron'
 
-import {tray} from './main/tray'
+import { tray } from './main/tray'
 
-import {send} from './main'
+import { send } from './main'
 
-import {ping} from './main/tester'
-import {win} from './main/platform'
-import {sendTo} from './utils'
+import { ping } from './main/tester'
+import { win } from './main/platform'
+import { sendTo } from './utils'
 import DB from './db'
 
 const unzip = require('unzipper')
@@ -21,6 +21,9 @@ const progress = require('request-progress')
 const low = require('lowdb')
 const FileSync = require('lowdb/adapters/FileSync')
 const lodashId = require('lodash-id')
+const _ = require('lodash')
+
+const CORE_VERSION = '4.7.0'
 
 class V2Ray {
 
@@ -33,7 +36,7 @@ class V2Ray {
     //this.installed = false
   }
 
-  get installed(){
+  get installed () {
     return fs.existsSync(this.coreDir)
   }
 
@@ -47,12 +50,17 @@ class V2Ray {
       type = 'linux-64'
     }
 
-    return `https://github.com/v2ray/v2ray-core/releases/download/v4.2/v2ray-${type}.zip`
+    return `https://github.com/v2ray/v2ray-core/releases/download/v${CORE_VERSION}/v2ray-${type}.zip`
   }
 
   static formatLine (line, type) {
     let time = dayjs().format('YYYY-MM-DD HH:mm:ss')
     return `[${time}][${type}] ${line}`
+  }
+
+  static onInstalled () {
+    //this.installed = true
+    tray.emit('should-update')
   }
 
   checkCoreUpdate () {
@@ -79,23 +87,31 @@ class V2Ray {
     this.serverManager = new ServerManager(this)
     const configDBAdapter = new FileSync(this.configPath)
     this.configDB = new DB(this.configPath, {
-      "log": {
-        "loglevel": "warning"
+      'log': {
+        'loglevel': 'warning'
       },
-      "inbound": {
-        "port": 3080,
-        "listen": "127.0.0.1",
-        "protocol": "socks",
-        "settings": {
-          "auth": "noauth",
-          "udp": false,
-          "ip": "127.0.0.1"
+      'inbounds': [
+        {
+          'port': 3080,
+          'listen': '127.0.0.1',
+          'protocol': 'socks',
+          'settings': {
+            'auth': 'noauth'
+          }
+        },
+        {
+          'port': 3087,
+          'listen': '127.0.0.1',
+          'protocol': 'http',
+          'settings': {
+            'auth': 'noauth'
+          }
         }
-      },
-      "outbound": {
-        "protocol": "vmess",
-        "settings": {},
-        "tag": "direct"
+      ],
+      'outbound': {
+        'protocol': 'vmess',
+        'settings': {},
+        'tag': 'direct'
       }
     })
   }
@@ -125,7 +141,7 @@ class V2Ray {
     })
   }
 
-  setting(key, value){
+  setting (key, value) {
     if (key === undefined) {
       return this.db.get('config')
     }
@@ -149,26 +165,26 @@ class V2Ray {
           resolve(code)
         })
         this.ps.kill()
-      } else  {
+      } else {
         this.stopped()
         resolve()
       }
     })
   }
 
-  onStarted(){
+  onStarted () {
     this.started = true
     tray.emit('should-update')
     send('v2ray.started', true)
   }
 
-  stopped(){
+  stopped () {
     this.started = false
     tray.emit('should-update')
     send('v2ray.started', false)
   }
 
-  restart(){
+  restart () {
     return this.stop().then(c => {
       this.start()
     })
@@ -181,7 +197,7 @@ class V2Ray {
     })
   }
 
-  version(beforeStart, onProcess){
+  version (beforeStart, onProcess) {
     return this.install(beforeStart, onProcess).then(data => {
       return new Promise(resolve => {
         let version = spawn('./v2ray', ['-version'], {
@@ -195,11 +211,6 @@ class V2Ray {
         })
       })
     })
-  }
-
-  static onInstalled(){
-    //this.installed = true
-    tray.emit('should-update')
   }
 
   install (onStart, onProcess) {
@@ -219,14 +230,26 @@ class V2Ray {
         }
         onStart && onStart()
         let file = fs.createWriteStream(zip)
-        this.log('downloading v2ray core', 'system')
-        let stream = progress(request(url, {})).on('progress', state => {
+        this.log(`downloading v2ray core, from [${url}]\n`, 'system')
+        send('v2ray.install.state', lang('downloading_core'))
+        send('v2ray.install.error', false)
+
+        let stream = progress(request(url, {
+          //  proxy: 'http://127.0.0.1:1087'
+        })).on('progress', state => {
+          send('v2ray.progress', state.percent * 100)
           onProcess && onProcess(state.percent)
         }).on('error', err => {
           this.log(`download error: ${err}\n`, 'system')
+          send('v2ray.install.state', lang('downloading_core_error') + err)
+          send('v2ray.install.error', true)
           reject()
         }).pipe(file)
         stream.on('finish', () => {
+          send('v2ray.progress', 100)
+          send('v2ray.install.state', lang('extracting_core'))
+          send('v2ray.install.error', false)
+
           extract().on('finish', () => {
             fs.unlink(zip, err => {
               this.log(`unzip error: ${err}\n`, 'system')
@@ -239,6 +262,9 @@ class V2Ray {
                 cwd: this.coreDir
               })
             }
+            send('v2ray.installed', true)
+            send('v2ray.install.error', false)
+
             resolve()
           })
         })
@@ -248,7 +274,7 @@ class V2Ray {
     })
   }
 
-  handleIpc(){
+  handleIpc () {
     sendTo('v2ray.server', () => {
       return this.serverManager.current()
     })
@@ -262,10 +288,41 @@ class V2Ray {
       return this.serverManager.users()
     })
     sendTo('v2ray.config', () => {
-      return this.configDB.get('inbound').value()
+      let inbounds = this.configDB.get('inbounds').value()
+      let socks5 = inbounds[0] || {}
+      let http = inbounds[1] || {}
+      return {
+        listen: socks5.listen,
+        socks5_port: socks5.port,
+        http_port: http.port,
+      }
+    })
+    sendTo('v2ray.installed', () => {
+      return this.installed
     })
     ipcMain.on('v2ray.select', (e, data) => {
       this.serverManager.select(data)
+    })
+    ipcMain.on('config.save', (e, data) => {
+      let inbounds = [];
+      inbounds.push({
+        'port': data.socks5_port,
+        'listen': data.listen,
+        'protocol': 'socks',
+        'settings': {
+          'auth': 'noauth'
+        }
+      })
+      data.http_port && inbounds.push({
+        'port': data.http_port,
+        'listen': data.listen,
+        'protocol': 'http',
+        'settings': {
+          'auth': 'noauth'
+        }
+      })
+      this.configDB.set('inbounds', inbounds)
+      this.started && this.restart()
     })
     ipcMain.on('v2ray.add', (e, data) => {
       this.serverManager.save(data)
@@ -273,8 +330,14 @@ class V2Ray {
     ipcMain.on('v2ray.delete', (e, data) => {
       this.serverManager.remove(data)
     })
+    ipcMain.on('v2ray.install', (e, data) => {
+      this.install()
+    })
     ipcMain.on('users.add', (e, data) => {
       this.serverManager.saveUser(data)
+    })
+    ipcMain.on('users.remove', (e, data) => {
+      this.serverManager.removeUser(data)
     })
     sendTo('v2ray.users', () => {
       return this.serverManager.users()
@@ -288,12 +351,17 @@ class ServerManager {
     this.app = app
   }
 
+  static onServerChanged (srv) {
+    send('v2ray.server', srv)
+    tray.emit('should-update')
+  }
+
   save (server) {
     let servers = this.app.db.model('servers')
     let srv
     if (server.id) {
-       srv = servers.where({id: server.id}).update(server)
-    } else  {
+      srv = servers.where({id: server.id}).update(server)
+    } else {
       srv = servers.create(server)
     }
 
@@ -309,8 +377,8 @@ class ServerManager {
     let users = this.app.db.model('users')
     let u
     if (user.id) {
-       u = users.where({id: user.id}).update(user)
-    } else  {
+      u = users.where({id: user.id}).update(user)
+    } else {
       u = users.create(user)
     }
 
@@ -323,15 +391,16 @@ class ServerManager {
     this.serversChange()
   }
 
-  serversChange(){
+  serversChange () {
     send('v2ray.servers', this.servers())
     tray.emit('should-update')
   }
-  usersChange(){
+
+  usersChange () {
     send('v2ray.users', this.users())
   }
 
-  update(where, data){
+  update (where, data) {
     this.app.db.get('servers')
       .find(where)
       .assign(data)
@@ -342,11 +411,21 @@ class ServerManager {
     return this.app.db.model('servers').get()
   }
 
-  users(){
-    return this.app.db.model('users').get()
+  users () {
+    let servers = this.servers()
+    return this.app.db.model('users').get().map(u => {
+      u.deleteable = servers.filter(srv => srv.users.indexOf(u.id) > -1).length < 1
+
+      return u
+    })
   }
 
-  groups(){
+  removeUser (id) {
+    this.app.db.get('users').remove({id}).write()
+    this.usersChange()
+  }
+
+  groups () {
     let gs = this.app.db.model('groups').get().map(g => {
       g.servers = this.app.db.get('servers').filter(s => s.group_id === g.id).value()
       return g
@@ -358,49 +437,57 @@ class ServerManager {
       servers: this.app.db.get('servers').filter(s => !s.group_id).value()
     })
 
-    return gs;
+    return gs
   }
 
-  select(srv){
+  select (srv) {
     let outbound = this.app.configDB.get('outbound')
-
-    srv.users = srv.users.map(u => {
+    let server = _.clone(srv)
+    server.users = server.users.map(u => {
       if (typeof u === 'string') {
-        let filter = this.users().filter(user => user.id === u)
+        let filter = this.users().filter(user => user.id === u).map(us => {
+          us.id = us.uuid
+          return us
+        })
 
         if (filter.length < 1) {
-          return u;
+          return u
         }
 
         return filter[0]
       }
-      return u;
+      return u
     })
 
     outbound.set('settings.vnext', [
-      srv
+      server
     ]).write()
 
-    outbound.set('streamSettings', srv.options).write()
-    this.app.setting('currentServer', srv.id)
+    let options = server.options
+    options.tlsSettings = {
+      serverName: server.address,
+      allowInsecure: options.allowInsecure
+    }
+    outbound.set('streamSettings', options).write()
+    this.app.setting('currentServer', server.id)
     if (this.app.setting('autoConnect') || this.app.started) {
       this.app.restart()
     }
-    ServerManager.onServerChanged(srv)
+    ServerManager.onServerChanged(server)
   }
 
-  test(){
+  test () {
     this.servers().forEach(srv => {
       ping(srv.address).then(ms => {
         this.update({id: srv.id}, {
-          delay : ms
+          delay: ms
         })
         tray.emit('should-update')
         this.currentId() === srv.id && this.onChangeCurrent()
         send('v2ray.servers', this.servers())
       }).catch(err => {
         this.update({id: srv.id}, {
-          delay : false
+          delay: false
         })
         tray.emit('should-update')
         this.currentId() === srv.id && this.onChangeCurrent()
@@ -409,28 +496,22 @@ class ServerManager {
     })
   }
 
-  find(id) {
+  find (id) {
     return this.app.db.model('servers').find(id)
   }
 
-  current(){
-    return this.find(this.app.setting('currentServer'));
+  current () {
+    return this.find(this.app.setting('currentServer'))
   }
 
-  currentId(){
+  currentId () {
     return this.app.setting('currentServer')
   }
 
-  static onServerChanged(srv){
-    send('v2ray.server', srv)
-    tray.emit('should-update')
-  }
-
-  onChangeCurrent(){
+  onChangeCurrent () {
     ServerManager.onServerChanged(this.current())
   }
 }
-
 
 V2Ray.ServerManager = ServerManager
 

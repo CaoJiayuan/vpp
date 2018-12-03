@@ -1,37 +1,53 @@
 <template>
   <div class="dashboard">
-    <div class="columns is-mobile main" style="height: 60vh">
-      <div class="column is-4">
-      </div>
-      <div class="column is-4 text-center" v-if="server">
-        <div class="card">
-          <div class="card-content">
-            <p class="title">
-              {{ server.remark }}
-              <span class="tag"
-                    :class="started ? 'is-success' : 'is-danger'">{{ started ? 'connected' : 'unconnected' | lang
-                }}</span>
-              <span class="tag" :class="delayClass">{{ server.delay === false ? 'timeout' :  server.delay + 'ms' | lang }}</span>
-            </p>
-            <p class="subtitle">
-              {{ server.address }}
-            </p>
+    <div class="columns is-mobile main" style="height: 60vh;align-content: center">
+      <template v-if="installed">
+        <div class="column is-4 is-offset-4 text-center" v-if="server">
+          <div class="card">
+            <div class="card-content">
+              <p class="title">
+                {{ server.remark }}
+                <span class="tag"
+                      :class="started ? 'is-success' : 'is-danger'">{{ started ? 'connected' : 'unconnected' | lang
+                  }}</span>
+                <span class="tag" :class="delayClass">{{ server.delay === false ? 'timeout' :  server.delay + 'ms' | lang }}</span>
+              </p>
+              <p class="subtitle">
+                {{ server.address }}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="column is-4 text-center" v-if="!server">
-        <div class="card">
-          <div class="card-content">
-            <p class="title">
-              {{ 'unselect_server' | lang }}
-            </p>
-            <p class="subtitle" style="color: grey">
-              {{ 'select_server_from_tray' | lang }}
-            </p>
+        <div class="column is-4 is-offset-4 text-center" v-if="!server">
+          <div class="card">
+            <div class="card-content">
+              <p class="title">
+                {{ 'unselect_server' | lang }}
+              </p>
+              <p class="subtitle" style="color: grey">
+                {{ 'select_server_from_tray' | lang }}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-      <button v-if="server" @click="started = !started" class="switch-btn button" :class="started ? 'is-danger' : 'is-success'">
+      </template>
+      <template v-else>
+        <div class="column is-6 is-offset-3 text-center">
+          <div class="card">
+            <div class="card-content">
+              <p class="title">
+                {{ 'installing_core' | lang }}
+              </p>
+              <small style="color: grey;font-size: 12px">
+                {{ state }}
+                <a v-if="error" @click="$ipc.send('v2ray.install')">{{ 'reinstall' | lang }}</a>
+              </small>
+              <progress class="progress is-info" :value="progress" max="100"></progress>
+            </div>
+          </div>
+        </div>
+      </template>
+      <button v-if="server && installed" @click="started = !started" class="switch-btn button" :class="started ? 'is-danger' : 'is-success'">
         {{ started ? 'close' : 'open' | lang }}
       </button>
     </div>
@@ -43,11 +59,16 @@
 <script>
   import { delayClass } from '../../utils'
   import { mapGetters } from 'vuex'
+  import { lang } from '../../lang'
   export default {
     data () {
       return {
         s: false,
-        logs: []
+        logs: [],
+        installed: true,
+        progress: 0,
+        state: lang('downloading_core'),
+        error: false
       }
     },
     computed: {
@@ -76,6 +97,10 @@
         }
         this.logs.push(l)
       })
+      this.$require('v2ray.installed', installed => this.installed = installed)
+      this.$require('v2ray.progress', progress => this.progress = progress)
+      this.$require('v2ray.install.state', state => this.state = state)
+      this.$require('v2ray.install.error', error => this.error = error)
     }
   }
 </script>

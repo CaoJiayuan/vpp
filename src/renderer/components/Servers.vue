@@ -5,7 +5,7 @@
         <div class="column is-one-quarter srv">
           <div class="card" :class="server && server.id === srv.id ? 'active' : ''">
             <div class="srv-content">
-              <h2>{{ srv.remark }} <span class="tag" :class="delayClass(srv)">{{ !srv.delay ? 'timeout' :  srv.delay + 'ms'  | lang}}</span></h2>
+              <h2>{{ srv.remark }} <span class="tag" :class="delayClass(srv)" v-if="srv.delay !== undefined">{{ !srv.delay ? 'timeout' :  srv.delay + 'ms'  | lang}}</span></h2>
               <small>
                 {{ srv.address }}
                 <font-awesome-icon @click="select(srv)" class="link" icon="link" style="color: #743bf5;"></font-awesome-icon>

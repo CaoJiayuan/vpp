@@ -10,7 +10,7 @@
             <div class="field">
               <label class="label is-normal">{{ 'id' | lang }}*</label>
               <div class="control">
-                <input required class="input" v-model="user.id" type="text" :placeholder="'id' | lang ">
+                <input required class="input" v-model="user.uuid" type="text" :placeholder="'id' | lang ">
               </div>
             </div>
             <div class="field">
@@ -65,19 +65,20 @@
       return {
         modal: false,
         user: {
-          security: 'auto'
+          security: 'auto',
         }
       }
     },
     computed: {
       canSave () {
-        return !!this.user.id
+        return !!this.user.uuid
       }
     },
     components: {Modal},
     methods: {
       save () {
         if (this.canSave) {
+          this.user.alterId = parseInt(this.user.alterId)
           ipcRenderer.send('users.add', this.user)
           this.modal = false
         }

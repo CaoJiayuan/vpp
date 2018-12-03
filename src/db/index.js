@@ -21,7 +21,7 @@ class DB {
   }
 
   set(key, value){
-    return this.low.get(key, value).write();
+    return this.low.set(key, value).write();
   }
 
   static open(dbPath, $defaults = {}) {
@@ -43,6 +43,10 @@ class Model{
 
     if (typeof key === 'object') {
       this.wheres = Object.assign({}, this.wheres, key)
+    }
+
+    if (typeof key === 'function') {
+      this.wheres = key
     }
 
     return this;
