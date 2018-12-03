@@ -79,6 +79,7 @@ function createWindow () {
 app.on('ready', () => {
   if (!mainWindow && !hideAtStart) {
     createWindow()
+    app.emit('show')
   }
   createTray(v2ray)
   handleStartAndStop()
