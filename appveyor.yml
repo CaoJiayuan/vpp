@@ -1,8 +1,8 @@
 version: 0.1.{build}
 
 branches:
-  only:
-    - "/^\\d+\\.\\d+\\.\\d+$/"
+  except:
+     - master
 
 image: Visual Studio 2017
 platform:
