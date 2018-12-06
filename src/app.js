@@ -446,8 +446,9 @@ class ServerManager {
     server.users = server.users.map(u => {
       if (typeof u === 'string') {
         let filter = this.users().filter(user => user.id === u).map(us => {
-          us.id = us.uuid
-          return us
+          let usr = _.clone(us)
+          usr.id = usr.uuid
+          return usr
         })
 
         if (filter.length < 1) {
