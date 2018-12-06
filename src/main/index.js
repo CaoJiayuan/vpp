@@ -12,7 +12,7 @@ const path = require('path')
 if (process.env.NODE_ENV !== 'development') {
   global.__static = path.join(__dirname, '/static').replace(/\\/g, '\\\\')
 }
-const hideAtStart = false
+const hideAtStart = true
 
 let mainWindow
 const winURL = process.env.NODE_ENV === 'development'
@@ -107,6 +107,7 @@ app.on('show', function () {
       mainWindow.restore()
     }
     mainWindow.show()
+    mainWindow.focus()
   } else {
     createWindow()
   }
