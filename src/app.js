@@ -108,11 +108,23 @@ class V2Ray {
           }
         }
       ],
-      'outbound': {
-        'protocol': 'vmess',
-        'settings': {},
-        'tag': 'direct'
-      }
+      'outbounds' : [
+        {
+          'protocol': 'vmess',
+          'settings': {},
+          'tag': 'proxy'
+        },
+        {
+          'protocol': 'freedom',
+          'settings': {},
+          'tag': 'direct'
+        },
+        {
+          'protocol': 'blackhole',
+          'settings': {},
+          'tag': 'block'
+        }
+      ]
     })
   }
 
@@ -441,7 +453,7 @@ class ServerManager {
   }
 
   select (srv) {
-    let outbound = this.app.configDB.get('outbound')
+    let proxy = this.app.configDB.get('outbounds.0')
     let server = _.clone(srv)
     server.users = server.users.map(u => {
       if (typeof u === 'string') {
@@ -460,7 +472,7 @@ class ServerManager {
       return u
     })
 
-    outbound.set('settings.vnext', [
+    proxy.set('settings.vnext', [
       server
     ]).write()
 
@@ -469,7 +481,7 @@ class ServerManager {
       serverName: server.address,
       allowInsecure: options.allowInsecure
     }
-    outbound.set('streamSettings', options).write()
+    proxy.set('streamSettings', options).write()
     this.app.setting('currentServer', server.id)
     if (this.app.setting('autoConnect') || this.app.started) {
       this.app.restart()
