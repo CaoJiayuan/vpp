@@ -18,6 +18,26 @@
       <input required class="input" v-model="config.http_port" type="number" :placeholder="'http_port' | lang ">
     </div>
   </div>
+
+  <!-- <div class="field">
+    <label class="label">
+      <a href="#" @click="advance = !advance">
+        <font-awesome-icon :icon="advance ? 'angle-down': 'angle-right'" ></font-awesome-icon>
+        {{ 'advances' | lang }}
+      </a>
+    </label>
+  </div> -->
+  <transition name="fade">
+      <template v-if="advance">
+          <div class="field">
+            <label class="label is-normal">{{ 'dbPath' | lang }}</label>
+            <div class="control">
+              <input required class="input" v-model="config.dbPath" type="text" :placeholder="'dbPath' | lang ">
+            </div>
+          </div>
+      </template>
+  </transition>
+
   <div class="field">
     <button class="button is-info" :disabled="!canSave" @click="save">{{ 'save' | lang }}</button>
   </div>
@@ -32,7 +52,8 @@
           listen: '127.0.0.1',
           socks5_port: 3080,
           http_port: 3087
-        }
+        },
+        advance: false
       }
     },
     computed:{

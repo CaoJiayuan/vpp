@@ -33,14 +33,14 @@
             name: lang('dashboard')
           },
           {
-            path: '/servers',
-            icon: 'hard-drive-outline',
-            name: lang('servers')
-          },
-          {
             path: '/users',
             icon: 'people-outline',
             name: lang('users')
+          },
+          {
+            path: '/servers',
+            icon: 'hard-drive-outline',
+            name: lang('servers')
           },
           {
             path: '/config',
@@ -52,12 +52,16 @@
     },
     methods: {
       ...mapActions({
-        setCurrentServer: 'setCurrentServer'
+        setCurrentServer: 'setCurrentServer',
+        pushLog: 'pushLog'
       })
     },
     mounted () {
       this.$require('v2ray.server', srv => {
         this.setCurrentServer(srv)
+      })
+      this.$require('v2ray.log', l => {
+        this.pushLog(l)
       })
       this.$eva.replace()
     }

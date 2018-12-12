@@ -47,8 +47,9 @@
             </div>
             <div class="field">
               <label class="label">
-                <a href="#" @click="advance = !advance">{{ 'advances' | lang }}
-                  <font-awesome-icon icon="angle-down" ></font-awesome-icon>
+                <a href="#" @click="advance = !advance">
+                  <font-awesome-icon :icon="advance ? 'angle-down': 'angle-right'" ></font-awesome-icon>
+                  {{ 'advances' | lang }}
                 </a>
               </label>
             </div>
@@ -63,7 +64,7 @@
                       <div class="control">
                         <div class="select is-multiple">
                           <select v-model="serv.options.security">
-                            <option :value="undefined"></option>
+                            <option :value="undefined">none</option>
                             <option value="tls" >TLS</option>
                           </select>
                         </div>

@@ -18,9 +18,6 @@ const path = require('path')
 const dayjs = require('dayjs')
 const request = require('request')
 const progress = require('request-progress')
-const low = require('lowdb')
-const FileSync = require('lowdb/adapters/FileSync')
-const lodashId = require('lodash-id')
 const _ = require('lodash')
 
 const CORE_VERSION = '4.7.0'
@@ -33,7 +30,6 @@ class V2Ray {
     this.configPath = path.join(this.workDir, 'config.json')
     this.pidFile = path.join(workDir, 'v2ray.pid')
     this.started = fs.existsSync(this.pidFile)
-    //this.installed = false
   }
 
   get installed () {
@@ -59,7 +55,6 @@ class V2Ray {
   }
 
   static onInstalled () {
-    //this.installed = true
     tray.emit('should-update')
   }
 
@@ -71,8 +66,15 @@ class V2Ray {
     })
   }
 
-  init (dbPath) {
-    dbPath = dbPath || path.join(this.workDir, 'db.json')
+  init () {
+    let advPath = path.join(this.workDir, 'adv.json')
+    this.advConf = new DB(advPath, {
+      dbPath: path.join(this.workDir, 'db.json')
+    })
+
+    let dbPath = this.advConf.get('dbPath').value()
+
+    console.log(`App initialized, work dir [${this.workDir}], db path [${dbPath}]`)
     this.db = new DB(dbPath, {
       servers: [],
       users: [],
@@ -85,7 +87,6 @@ class V2Ray {
     })
 
     this.serverManager = new ServerManager(this)
-    const configDBAdapter = new FileSync(this.configPath)
     this.configDB = new DB(this.configPath, {
       'log': {
         'loglevel': 'warning'
@@ -129,6 +130,8 @@ class V2Ray {
   }
 
   start () {
+
+    this.applyConfig()
     return new Promise((resolve, reject) => {
       this.ps = spawn('./v2ray', ['-config', this.configPath], {
         cwd: this.coreDir
@@ -151,6 +154,42 @@ class V2Ray {
         send('v2ray.log', 'V2Ray core stopped')
       })
     })
+  }
+
+  /**
+   * Apply v2ray config
+   */
+  applyConfig(){
+    let proxy = this.configDB.get('outbounds.0')
+    let srv = this.serverManager.find(this.setting('currentServer'))
+    let server = _.clone(srv)
+    server.users = server.users.map(u => {
+      if (typeof u === 'string') {
+        let filter = this.serverManager.users().filter(user => user.id === u).map(us => {
+          let usr = _.clone(us)
+          usr.id = usr.uuid
+          return usr
+        })
+
+        if (filter.length < 1) {
+          return u
+        }
+
+        return filter[0]
+      }
+      return u
+    })
+
+    proxy.set('settings.vnext', [
+      server
+    ]).write()
+
+    let options = server.options
+    options.tlsSettings = {
+      serverName: server.address,
+      allowInsecure: options.allowInsecure
+    }
+    proxy.set('streamSettings', options).write()
   }
 
   setting (key, value) {
@@ -225,6 +264,11 @@ class V2Ray {
     })
   }
 
+  /**
+   * Install core
+   * @param {Function} [onStart]
+   * @param {Function} [onProcess]
+   */
   install (onStart, onProcess) {
     return new Promise((resolve, reject) => {
       if (!fs.existsSync(this.coreDir)) {
@@ -286,6 +330,9 @@ class V2Ray {
     })
   }
 
+  /**
+   * Handle render process request
+   */
   handleIpc () {
     sendTo('v2ray.server', () => {
       return this.serverManager.current()
@@ -303,10 +350,12 @@ class V2Ray {
       let inbounds = this.configDB.get('inbounds').value()
       let socks5 = inbounds[0] || {}
       let http = inbounds[1] || {}
+      let dbPath = this.advConf.get('dbPath').value()
       return {
         listen: socks5.listen,
         socks5_port: socks5.port,
         http_port: http.port,
+        dbPath: dbPath
       }
     })
     sendTo('v2ray.installed', () => {
@@ -453,40 +502,11 @@ class ServerManager {
   }
 
   select (srv) {
-    let proxy = this.app.configDB.get('outbounds.0')
-    let server = _.clone(srv)
-    server.users = server.users.map(u => {
-      if (typeof u === 'string') {
-        let filter = this.users().filter(user => user.id === u).map(us => {
-          let usr = _.clone(us)
-          usr.id = usr.uuid
-          return usr
-        })
-
-        if (filter.length < 1) {
-          return u
-        }
-
-        return filter[0]
-      }
-      return u
-    })
-
-    proxy.set('settings.vnext', [
-      server
-    ]).write()
-
-    let options = server.options
-    options.tlsSettings = {
-      serverName: server.address,
-      allowInsecure: options.allowInsecure
-    }
-    proxy.set('streamSettings', options).write()
-    this.app.setting('currentServer', server.id)
+    this.app.setting('currentServer', srv.id)
     if (this.app.setting('autoConnect') || this.app.started) {
       this.app.restart()
     }
-    ServerManager.onServerChanged(server)
+    ServerManager.onServerChanged(srv)
   }
 
   test () {

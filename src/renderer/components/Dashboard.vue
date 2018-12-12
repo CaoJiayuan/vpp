@@ -10,7 +10,7 @@
                 <span class="tag"
                       :class="started ? 'is-success' : 'is-danger'">{{ started ? 'connected' : 'unconnected' | lang
                   }}</span>
-                <span class="tag" :class="delayClass">{{ server.delay === false ? 'timeout' :  server.delay + 'ms' | lang }}</span>
+                <span class="tag" :class="delayClass" v-if="server.delay !== undefined">{{ server.delay === false ? 'timeout' :  server.delay + 'ms' | lang }}</span>
               </p>
               <p class="subtitle">
                 {{ server.address }}
@@ -52,19 +52,19 @@
       </button>
     </div>
     <div class="logs text-center">
+      <font-awesome-icon @click="cleanLogs" size="lg" class="trash" icon="trash" style="color: #ef8788;"></font-awesome-icon>
       <p v-for="l in logs">{{ l }}</p>
     </div>
   </div>
 </template>
 <script>
   import { delayClass } from '../../utils'
-  import { mapGetters } from 'vuex'
+  import { mapGetters,mapActions } from 'vuex'
   import { lang } from '../../lang'
   export default {
     data () {
       return {
         s: false,
-        logs: [],
         installed: true,
         progress: 0,
         state: lang('downloading_core'),
@@ -85,18 +85,17 @@
         return delayClass(this.server)
       },
       ...mapGetters({
-        server: 'currentServer'
+        server: 'currentServer',
+        logs: 'logs'
       })
     },
-    methods: {},
+    methods: {
+      ...mapActions({
+        cleanLogs: 'cleanLogs'
+      })
+    },
     mounted () {
       this.$require('v2ray.started', started => this.s = started)
-      this.$require('v2ray.log', l => {
-        if (this.logs.length > 30) {
-          this.logs.shift()
-        }
-        this.logs.push(l)
-      })
       this.$require('v2ray.installed', installed => this.installed = installed)
       this.$require('v2ray.progress', progress => this.progress = progress)
       this.$require('v2ray.install.state', state => this.state = state)
@@ -131,4 +130,13 @@
     color: grey
     z-index: -1
     font-size: 12px
+    &:hover .trash
+      opacity: 1
+    .trash
+      position: absolute
+      bottom: 16px
+      right: 16px
+      opacity: .6
+      cursor: pointer
+
 </style>

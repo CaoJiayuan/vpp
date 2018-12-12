@@ -1,6 +1,8 @@
 <template>
   <div class="add-user">
-    <button class="button is-info" @click="modal = true">
+    <button class="button is-info" @click="open({
+          security: 'auto',
+    })">
       {{ 'add' | lang }}
     </button>
     <modal :active="modal">
@@ -37,6 +39,11 @@
                 <div class="select">
                   <select v-model="user.security">
                     <option value="auto">auto</option>
+                    <option value="aes-128-cfb">aes-128-cfb</option>
+                    <option value="aes-128-gcm">aes-128-gcm</option>
+                    <option value="chacha20-poly1305">chacha20-poly1305</option>
+                    <option value="none">none</option>
+
                   </select>
                 </div>
               </div>
@@ -79,6 +86,7 @@
       save () {
         if (this.canSave) {
           this.user.alterId = parseInt(this.user.alterId)
+          this.user.level = parseInt(this.user.level)
           ipcRenderer.send('users.add', this.user)
           this.modal = false
         }
